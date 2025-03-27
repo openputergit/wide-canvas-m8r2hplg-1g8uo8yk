@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Management System</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .neubrutalism {
+            border: 3px solid black;
+            box-shadow: 5px 5px 0px black;
+            transition: all 0.2s ease;
+        }
+        .neubrutalism:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px black;
+        }
+        .shift-card {
+            background: #ffffff;
+            margin: 10px;
+            padding: 15px;
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        th, td {
+            border: 2px solid black;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body class="bg-blue-100 p-4">
+    <div id="app">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-bold mb-8 neubrutalism bg-yellow-300 p-4 inline-block">Shift Management System</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Current Week Schedule -->
+                <div class="neubrutalism bg-white p-4">
+                    <h2 class="text-2xl font-bold mb-4">Current Week Schedule</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th>Day</th>
+                                    <th>Date</th>
+                                    <th>Shift Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="day in currentWeekSchedule" :key="day.date">
+                                    <td>{{ day.dayName }}</td>
+                                    <td>{{ day.date }}</td>
+                                    <td>
+                                        <div v-for="shift in day.shifts" :key="shift.time" class="mb-1">
+                                            {{ shift.time }}: {{ shift.employees.join(', ') }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Shift Management -->
+                <div class="neubrutalism bg-white p-4">
+                    <h2 class="text-2xl font-bold mb-4">Shift Management</h2>
+                    <div class="space-y-4">
+                        <button @click="rotateShifts" class="neubrutalism bg-green-300 px-4 py-2">
+                            Rotate Shifts (Every 2 Weeks)
+                        </button>
+                        
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Add Employee</h3>
+                            <input v-model="newEmployee" type="text" placeholder="Employee Name" 
+                                class="neubrutalism p-2 mr-2">
+                            <button @click="addEmployee" class="neubrutalism bg-blue-300 px-4 py-2">
+                                Add Employee
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee List -->
+            <div class="mt-8 neubrutalism bg-white p-4">
+                <h2 class="text-2xl font-bold mb-4">Employee List</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div v-for="employee in employees" :key="employee" class="neubrutalism bg-gray-100 p-2">
+                        {{ employee }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    employees: ['Employee 1', 'Employee 2', 'Employee 3'], // Sample employees
+                    newEmployee: '',
+                    shifts: {
+                        weekday: [
+                            { time: '7:00 AM - 4:00 PM', required: 2 },
+                            { time: '9:00 AM - 6:00 PM', required: 25 },
+                            { time: '3:00 PM - 12:00 AM', required: 3 },
+                            { time: '6:00 PM - 3:00 AM', required: 8 },
+                            { time: '9:30 PM - 6:30 AM', required: 1 },
+                            { time: '10:30 PM - 7:30 AM', required: 1 }
+                        ],
+                        saturday: [
+                            { time: '7:00 AM - 4:00 PM', required: 1 },
+                            { time: '3:00 PM - 12:00 AM', required: 1 },
+                            { time: '9:30 PM - 6:30 AM', required: 1 }
+                        ],
+                        sunday: [
+                            { time: '7:00 AM - 4:00 PM', required: 1 },
+                            { time: '9:30 PM - 6:30 AM', required: 1 }
+                        ]
+                    },
+                    currentWeekSchedule: []
+                }
+            },
+            methods: {
+                addEmployee() {
+                    if (this.newEmployee.trim()) {
+                        this.employees.push(this.newEmployee.trim())
+                        this.newEmployee = ''
+                        this.generateSchedule()
+                    }
+                },
+                rotateShifts() {
+                    // Implement shift rotation logic
+                    this.generateSchedule()
+                },
+                generateSchedule() {
+                    // Generate current week schedule
+                    const schedule = []
+                    const today = new Date()
+                    const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()))
+
+                    for (let i = 0; i < 7; i++) {
+                        const currentDate = new Date(startOfWeek)
+                        currentDate.setDate(startOfWeek.getDate() + i)
+                        
+                        const daySchedule = {
+                            dayName: currentDate.toLocaleDateString('en-US', { weekday: 'long' }),
+                            date: currentDate.toLocaleDateString(),
+                            shifts: this.getShiftsForDay(currentDate.getDay())
+                        }
+                        schedule.push(daySchedule)
+                    }
+                    this.currentWeekSchedule = schedule
+                },
+                getShiftsForDay(day) {
+                    // Return appropriate shifts based on day (0 = Sunday, 6 = Saturday)
+                    if (day === 0) return this.shifts.sunday
+                    if (day === 6) return this.shifts.saturday
+                    return this.shifts.weekday
+                }
+            },
+            mounted() {
+                this.generateSchedule()
+            }
+        }).mount('#app')
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
